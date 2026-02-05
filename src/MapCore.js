@@ -119,6 +119,44 @@ var MapCore = (function() {
     var numRows = CONFIG.map.rows;
     var numCols = CONFIG.map.cols;
 
+    // Build batch arrays for values, backgrounds, and notes
+    var values = [];
+    var backgrounds = [];
+    var notes = [];
+
+    for (var row = 0; row < numRows; row++) {
+      var valueRow = [];
+      var bgRow = [];
+      var noteRow = [];
+
+      for (var col = 0; col < numCols; col++) {
+        var cellData = renderData[row][col];
+
+        // Set background color
+        bgRow.push(cellData.color);
+
+        // Set cell value and note based on state
+        if (cellData.isPOI) {
+          valueRow.push(CONFIG.display.poiSymbol);
+          if (cellData.owner) {
+            noteRow.push('📍 ' + cellData.poiName + '\nOwned by: ' + cellData.owner);
+          } else {
+            noteRow.push('📍 ' + cellData.poiName + '\nNeutral (unclaimed)');
+          }
+        } else if (cellData.owner) {
+          valueRow.push('');
+          noteRow.push('Territory: ' + cellData.territory + '\nOwned by: ' + cellData.owner);
+        } else {
+          valueRow.push('');
+          noteRow.push('');
+        }
+      }
+
+      values.push(valueRow);
+      backgrounds.push(bgRow);
+      notes.push(noteRow);
+    }
+
     // Clear and set up the title row
     sheet.getRange(1, 1, 1, numCols + 1).clear();
     sheet.getRange(1, 1, 1, numCols + 1).merge();
@@ -153,57 +191,40 @@ var MapCore = (function() {
         .setFontColor('#FFFFFF');
     }
 
-    // Get the entire grid range for batch operations
+    // Get the entire grid range
     var gridRange = sheet.getRange(gridStartRow, gridStartCol, numRows, numCols);
 
-    // Clear existing content and formatting
+    // Clear first, then flush to ensure it completes
     gridRange.clear();
+    SpreadsheetApp.flush();
 
-    // Set default formatting for all cells
+    // Apply all batch operations
+    gridRange.setValues(values);
+    gridRange.setBackgrounds(backgrounds);
+    gridRange.setNotes(notes);
+
+    // Set formatting
     gridRange.setFontSize(28)
       .setHorizontalAlignment('center')
       .setVerticalAlignment('middle')
       .setFontColor(CONFIG.display.poiTextColor);
 
-    // Now render each cell individually (unfortunately required for varied formatting)
+    // Flush to ensure values are written before borders
+    SpreadsheetApp.flush();
+
+    // Apply borders (must be done per-cell for varied styles)
     for (var row = 0; row < numRows; row++) {
       for (var col = 0; col < numCols; col++) {
         var cellData = renderData[row][col];
         var cell = sheet.getRange(gridStartRow + row, gridStartCol + col);
 
-        // Set background color
-        cell.setBackground(cellData.color);
-
-        // Set cell value and note based on state
-        if (cellData.isPOI) {
-          // POI cell - always show symbol regardless of ownership
-          cell.setValue(CONFIG.display.poiSymbol);
-
-          if (cellData.owner) {
-            cell.setNote('📍 ' + cellData.poiName + '\nOwned by: ' + cellData.owner);
-          } else {
-            cell.setNote('📍 ' + cellData.poiName + '\nNeutral (unclaimed)');
-          }
-        } else if (cellData.owner) {
-          // Owned non-POI cell
-          cell.setValue('');
-          cell.setNote('Territory: ' + cellData.territory + '\nOwned by: ' + cellData.owner);
-        } else {
-          // Unclaimed non-POI cell
-          cell.setValue('');
-          cell.setNote('');
-        }
-
-        // Set border
         if (cellData.isRecent) {
-          // Recent claim - thick black border
           cell.setBorder(
             true, true, true, true, false, false,
             CONFIG.display.recentClaimBorderColor,
             SpreadsheetApp.BorderStyle.SOLID_THICK
           );
         } else if (cellData.owner) {
-          // Owned - darkened color border
           var borderColor = darkenColor(cellData.color);
           cell.setBorder(
             true, true, true, true, false, false,
@@ -211,7 +232,6 @@ var MapCore = (function() {
             SpreadsheetApp.BorderStyle.SOLID
           );
         } else {
-          // Neutral - light border
           cell.setBorder(
             true, true, true, true, false, false,
             '#AAAAAA',
@@ -222,14 +242,14 @@ var MapCore = (function() {
     }
 
     // Set column widths
-    sheet.setColumnWidth(1, 30); // Row label column
+    sheet.setColumnWidth(1, 30);
     for (var c = 2; c <= numCols + 1; c++) {
       sheet.setColumnWidth(c, CONFIG.map.cellWidth);
     }
 
     // Set row heights
-    sheet.setRowHeight(1, 35); // Title row
-    sheet.setRowHeight(2, 25); // Header row
+    sheet.setRowHeight(1, 35);
+    sheet.setRowHeight(2, 25);
     for (var r = gridStartRow; r < gridStartRow + numRows; r++) {
       sheet.setRowHeight(r, CONFIG.map.cellHeight);
     }
