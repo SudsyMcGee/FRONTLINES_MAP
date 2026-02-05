@@ -70,28 +70,67 @@ function createAllSheets(ss) {
 }
 
 /**
+ * 30 distinguishable colors for player territories
+ * Based on colorblind-friendly palettes from mk.bcgsc.ca and additional high-contrast colors
+ * Excludes grey, white, black (reserved for UI elements)
+ */
+var PLAYER_COLORS = [
+  '#E6194B',  // Red
+  '#3CB44B',  // Green
+  '#FFE119',  // Yellow
+  '#4363D8',  // Blue
+  '#F58231',  // Orange
+  '#911EB4',  // Purple
+  '#42D4F4',  // Cyan
+  '#F032E6',  // Magenta
+  '#BFEF45',  // Lime
+  '#FABED4',  // Pink
+  '#469990',  // Teal
+  '#DCBEFF',  // Lavender
+  '#9A6324',  // Brown
+  '#FFFAC8',  // Beige
+  '#800000',  // Maroon
+  '#AAFFC3',  // Mint
+  '#808000',  // Olive
+  '#FFD8B1',  // Apricot
+  '#000075',  // Navy
+  '#A9A9A9',  // Dark Gray (exception - distinct enough)
+  '#E6BEFF',  // Light Purple
+  '#9F0162',  // Deep Magenta
+  '#009F81',  // Sea Green
+  '#00C2F9',  // Sky Blue
+  '#FF6E3A',  // Coral
+  '#FFC33B',  // Gold
+  '#008DF9',  // Azure
+  '#8400CD',  // Violet
+  '#00FCCF',  // Turquoise
+  '#FF5AAF'   // Hot Pink
+];
+
+/**
  * Populate the Player Roster sheet with initial data
  */
 function populatePlayerRoster(ss) {
   var sheet = DataService.getSheet(ss, CONFIG.sheets.PLAYER_ROSTER);
   sheet.clear();
 
+  // Assign colors from the palette to each player
   var data = [
     ['Player Name', 'Color', 'Maps'],
-    ['Oracle', '#FF6B6B', 'TGA'],
-    ['Kori', '#4ECDC4', 'Both'],
-    ['Koen', '#FFE66D', 'TGA'],
-    ['Roly', '#95E1D3', 'TGA'],
-    ['Addsey', '#F38181', 'Both'],
-    ['Justin', '#45B7D1', 'Both'],
-    ['Dr_Punchwhack', '#FFA07A', 'TGA'],
-    ['ViRtUaL cHeSs 64!', '#98D8C8', 'TGA'],
-    ['JlIM', '#FF9AA2', 'TGA'],
-    ['Sarah', '#C7CEEA', 'Both'],
-    ['K', '#FFB7B2', 'TGA'],
-    ['Sammy', '#B4F8C8', 'Westgate'],
-    ['Laurie', '#FBE7C6', 'Westgate'],
-    ['Scotty', '#A0E7E5', 'Westgate']
+    ['Oracle', PLAYER_COLORS[0], 'TGA'],
+    ['Kori', PLAYER_COLORS[1], 'Both'],
+    ['Koen', PLAYER_COLORS[2], 'TGA'],
+    ['Roly', PLAYER_COLORS[3], 'TGA'],
+    ['Addsey', PLAYER_COLORS[4], 'Both'],
+    ['Justin', PLAYER_COLORS[5], 'Both'],
+    ['Dr_Punchwhack', PLAYER_COLORS[6], 'TGA'],
+    ['ViRtUaL cHeSs 64!', PLAYER_COLORS[7], 'TGA'],
+    ['JlIM', PLAYER_COLORS[8], 'TGA'],
+    ['Sarah', PLAYER_COLORS[9], 'Both'],
+    ['K', PLAYER_COLORS[10], 'TGA'],
+    ['Sammy', PLAYER_COLORS[11], 'Westgate'],
+    ['Laurie', PLAYER_COLORS[12], 'Westgate'],
+    ['Scotty', PLAYER_COLORS[13], 'Westgate']
   ];
 
   DataService.writeData(sheet, data);
@@ -101,6 +140,21 @@ function populatePlayerRoster(ss) {
     .setFontWeight('bold')
     .setBackground('#2C3E50')
     .setFontColor('#FFFFFF');
+
+  // Add color dropdown validation (column B, starting row 2)
+  var colorRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(PLAYER_COLORS, true)
+    .setAllowInvalid(true)  // Allow custom hex codes too
+    .build();
+  sheet.getRange(2, 2, 50, 1).setDataValidation(colorRule);
+
+  // Format color cells with their background colors
+  for (var i = 1; i < data.length; i++) {
+    var colorValue = data[i][1];
+    var cell = sheet.getRange(i + 1, 2);
+    cell.setBackground(colorValue);
+    cell.setFontColor(getContrastingTextColor(colorValue));
+  }
 
   // Auto-resize columns
   sheet.autoResizeColumns(1, 3);
