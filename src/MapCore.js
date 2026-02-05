@@ -304,7 +304,7 @@ var MapCore = (function() {
     // Legend title
     sheet.getRange(legendRow, legendStartCol, 1, 2).merge();
     sheet.getRange(legendRow, legendStartCol)
-      .setValue('🎮 PLAYERS')
+      .setValue('PLAYERS')
       .setFontSize(12)
       .setFontWeight('bold')
       .setHorizontalAlignment('center')
@@ -341,6 +341,12 @@ var MapCore = (function() {
         '#CCCCCC',
         SpreadsheetApp.BorderStyle.SOLID
       );
+
+      // Set row height for rows that extend beyond the map grid
+      var mapEndRow = gridStartRow + CONFIG.map.rows - 1;
+      if (rowNum > mapEndRow) {
+        sheet.setRowHeight(rowNum, CONFIG.map.cellHeight);
+      }
     }
   }
 
