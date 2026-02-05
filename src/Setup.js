@@ -120,17 +120,17 @@ function populatePlayerRoster(ss) {
     ['Oracle', PLAYER_COLORS[0], 'TGA'],
     ['Kori', PLAYER_COLORS[1], 'Both'],
     ['Koen', PLAYER_COLORS[2], 'TGA'],
-    ['Roly', PLAYER_COLORS[3], 'TGA'],
-    ['Addsey', PLAYER_COLORS[4], 'Both'],
-    ['Justin', PLAYER_COLORS[5], 'Both'],
-    ['Dr_Punchwhack', PLAYER_COLORS[6], 'TGA'],
-    ['ViRtUaL cHeSs 64!', PLAYER_COLORS[7], 'TGA'],
-    ['JlIM', PLAYER_COLORS[8], 'TGA'],
-    ['Sarah', PLAYER_COLORS[9], 'Both'],
-    ['K', PLAYER_COLORS[10], 'TGA'],
+    ['Justin', PLAYER_COLORS[3], 'Both'],
+    ['Dr_Punchwhack', PLAYER_COLORS[4], 'TGA'],
+    ['K', PLAYER_COLORS[5], 'TGA'],
+    ['VirtualChess64!', PLAYER_COLORS[6], 'TGA'],
+    ['Roly', PLAYER_COLORS[7], 'TGA'],
+    ['Sarah', PLAYER_COLORS[8], 'Both'],
+    ['JlIM', PLAYER_COLORS[9], 'TGA'],
+    ['Addsey', PLAYER_COLORS[10], 'Both'],
     ['Sammy', PLAYER_COLORS[11], 'Westgate'],
-    ['Laurie', PLAYER_COLORS[12], 'Westgate'],
-    ['Scotty', PLAYER_COLORS[13], 'Westgate']
+    ['Scotty', PLAYER_COLORS[12], 'Westgate'],
+    ['Laurie', PLAYER_COLORS[13], 'Westgate']
   ];
 
   DataService.writeData(sheet, data);
@@ -162,6 +162,7 @@ function populatePlayerRoster(ss) {
 
 /**
  * Populate Starting Territories sheet
+ * Each player gets a 2x2 block from their corner squares
  */
 function populateStartingTerritories(ss) {
   var sheet = DataService.getSheet(ss, CONFIG.sheets.STARTING_TERRITORIES);
@@ -169,26 +170,45 @@ function populateStartingTerritories(ss) {
 
   var data = [
     ['Territory', 'Owner', 'Map'],
-    // TGA territories
-    ['A1', 'Oracle', 'TGA'], ['B1', 'Oracle', 'TGA'], ['A2', 'Oracle', 'TGA'], ['B2', 'Oracle', 'TGA'],
-    ['E1', 'Kori', 'TGA'], ['F1', 'Kori', 'TGA'], ['E2', 'Kori', 'TGA'], ['F2', 'Kori', 'TGA'],
-    ['C3', 'Koen', 'TGA'], ['D3', 'Koen', 'TGA'], ['C4', 'Koen', 'TGA'], ['D4', 'Koen', 'TGA'],
-    ['I2', 'Roly', 'TGA'], ['J2', 'Roly', 'TGA'], ['I3', 'Roly', 'TGA'], ['J3', 'Roly', 'TGA'],
-    ['M4', 'Addsey', 'TGA'], ['N4', 'Addsey', 'TGA'], ['M5', 'Addsey', 'TGA'], ['N5', 'Addsey', 'TGA'],
-    ['A5', 'Justin', 'TGA'], ['B5', 'Justin', 'TGA'], ['A6', 'Justin', 'TGA'], ['B6', 'Justin', 'TGA'],
-    ['D6', 'Dr_Punchwhack', 'TGA'], ['E6', 'Dr_Punchwhack', 'TGA'], ['D7', 'Dr_Punchwhack', 'TGA'], ['E7', 'Dr_Punchwhack', 'TGA'],
-    ['F5', 'ViRtUaL cHeSs 64!', 'TGA'], ['G5', 'ViRtUaL cHeSs 64!', 'TGA'], ['F6', 'ViRtUaL cHeSs 64!', 'TGA'], ['G6', 'ViRtUaL cHeSs 64!', 'TGA'],
-    ['J5', 'JlIM', 'TGA'], ['K5', 'JlIM', 'TGA'], ['J6', 'JlIM', 'TGA'], ['K6', 'JlIM', 'TGA'],
-    ['I7', 'Sarah', 'TGA'], ['J7', 'Sarah', 'TGA'], ['I8', 'Sarah', 'TGA'], ['J8', 'Sarah', 'TGA'],
-    ['E8', 'K', 'TGA'], ['F8', 'K', 'TGA'], ['E9', 'K', 'TGA'], ['F9', 'K', 'TGA'],
-    // Westgate territories
-    ['C3', 'Sammy', 'Westgate'], ['D3', 'Sammy', 'Westgate'], ['C4', 'Sammy', 'Westgate'], ['D4', 'Sammy', 'Westgate'],
-    ['I2', 'Kori', 'Westgate'], ['J2', 'Kori', 'Westgate'], ['I3', 'Kori', 'Westgate'], ['J3', 'Kori', 'Westgate'],
-    ['D6', 'Justin', 'Westgate'], ['E6', 'Justin', 'Westgate'], ['D7', 'Justin', 'Westgate'], ['E7', 'Justin', 'Westgate'],
-    ['F5', 'Sarah', 'Westgate'], ['G5', 'Sarah', 'Westgate'], ['F6', 'Sarah', 'Westgate'], ['G6', 'Sarah', 'Westgate'],
-    ['J5', 'Addsey', 'Westgate'], ['K5', 'Addsey', 'Westgate'], ['J6', 'Addsey', 'Westgate'], ['K6', 'Addsey', 'Westgate'],
-    ['I7', 'Laurie', 'Westgate'], ['J7', 'Laurie', 'Westgate'], ['I8', 'Laurie', 'Westgate'], ['J8', 'Laurie', 'Westgate'],
-    ['E8', 'Scotty', 'Westgate'], ['F8', 'Scotty', 'Westgate'], ['E9', 'Scotty', 'Westgate'], ['F9', 'Scotty', 'Westgate']
+    // TGA territories (2x2 blocks from corner squares)
+    // Oracle: A1,B2
+    ['A1', 'Oracle', 'TGA'], ['A2', 'Oracle', 'TGA'], ['B1', 'Oracle', 'TGA'], ['B2', 'Oracle', 'TGA'],
+    // Kori: E1,F2
+    ['E1', 'Kori', 'TGA'], ['E2', 'Kori', 'TGA'], ['F1', 'Kori', 'TGA'], ['F2', 'Kori', 'TGA'],
+    // Koen: C3,D4
+    ['C3', 'Koen', 'TGA'], ['C4', 'Koen', 'TGA'], ['D3', 'Koen', 'TGA'], ['D4', 'Koen', 'TGA'],
+    // Justin: A5,B6
+    ['A5', 'Justin', 'TGA'], ['A6', 'Justin', 'TGA'], ['B5', 'Justin', 'TGA'], ['B6', 'Justin', 'TGA'],
+    // Dr_Punchwhack: D6,E7
+    ['D6', 'Dr_Punchwhack', 'TGA'], ['D7', 'Dr_Punchwhack', 'TGA'], ['E6', 'Dr_Punchwhack', 'TGA'], ['E7', 'Dr_Punchwhack', 'TGA'],
+    // K: F8,G9
+    ['F8', 'K', 'TGA'], ['F9', 'K', 'TGA'], ['G8', 'K', 'TGA'], ['G9', 'K', 'TGA'],
+    // VirtualChess64!: G5,H6
+    ['G5', 'VirtualChess64!', 'TGA'], ['G6', 'VirtualChess64!', 'TGA'], ['H5', 'VirtualChess64!', 'TGA'], ['H6', 'VirtualChess64!', 'TGA'],
+    // Roly: I2,J3
+    ['I2', 'Roly', 'TGA'], ['I3', 'Roly', 'TGA'], ['J2', 'Roly', 'TGA'], ['J3', 'Roly', 'TGA'],
+    // Sarah: I7,J8
+    ['I7', 'Sarah', 'TGA'], ['I8', 'Sarah', 'TGA'], ['J7', 'Sarah', 'TGA'], ['J8', 'Sarah', 'TGA'],
+    // JlIM: K5,L6
+    ['K5', 'JlIM', 'TGA'], ['K6', 'JlIM', 'TGA'], ['L5', 'JlIM', 'TGA'], ['L6', 'JlIM', 'TGA'],
+    // Addsey: M4,N5
+    ['M4', 'Addsey', 'TGA'], ['M5', 'Addsey', 'TGA'], ['N4', 'Addsey', 'TGA'], ['N5', 'Addsey', 'TGA'],
+
+    // Westgate territories (2x2 blocks from corner squares)
+    // Sammy: C3,D4
+    ['C3', 'Sammy', 'Westgate'], ['C4', 'Sammy', 'Westgate'], ['D3', 'Sammy', 'Westgate'], ['D4', 'Sammy', 'Westgate'],
+    // Justin: D6,E7
+    ['D6', 'Justin', 'Westgate'], ['D7', 'Justin', 'Westgate'], ['E6', 'Justin', 'Westgate'], ['E7', 'Justin', 'Westgate'],
+    // Scotty: F8,G9
+    ['F8', 'Scotty', 'Westgate'], ['F9', 'Scotty', 'Westgate'], ['G8', 'Scotty', 'Westgate'], ['G9', 'Scotty', 'Westgate'],
+    // Sarah: G5,H6
+    ['G5', 'Sarah', 'Westgate'], ['G6', 'Sarah', 'Westgate'], ['H5', 'Sarah', 'Westgate'], ['H6', 'Sarah', 'Westgate'],
+    // Kori: I2,J3
+    ['I2', 'Kori', 'Westgate'], ['I3', 'Kori', 'Westgate'], ['J2', 'Kori', 'Westgate'], ['J3', 'Kori', 'Westgate'],
+    // Laurie: I7,J8
+    ['I7', 'Laurie', 'Westgate'], ['I8', 'Laurie', 'Westgate'], ['J7', 'Laurie', 'Westgate'], ['J8', 'Laurie', 'Westgate'],
+    // Addsey: K5,L6
+    ['K5', 'Addsey', 'Westgate'], ['K6', 'Addsey', 'Westgate'], ['L5', 'Addsey', 'Westgate'], ['L6', 'Addsey', 'Westgate']
   ];
 
   DataService.writeData(sheet, data);
@@ -204,36 +224,26 @@ function populateStartingTerritories(ss) {
 
 /**
  * Populate POI Definitions sheet
+ * Same POIs for both maps: A2,B8,C4,C6,D1,E6,F1,F3,F5,F9,G4,H6,I3,J6,K8,L3,M2,M4,N8
  */
 function populatePOIDefinitions(ss) {
   var sheet = DataService.getSheet(ss, CONFIG.sheets.POI_DEFINITIONS);
   sheet.clear();
 
-  var data = [
-    ['Territory', 'Map', 'Name'],
-    // TGA POIs
-    ['D1', 'TGA', 'Northern Outpost'],
-    ['F3', 'TGA', 'Central Market'],
-    ['F4', 'TGA', 'Old Fortress'],
-    ['C6', 'TGA', 'Western Shrine'],
-    ['H6', 'TGA', 'Eastern Temple'],
-    ['L2', 'TGA', 'Mountain Pass'],
-    ['L8', 'TGA', 'Southern Ruins'],
-    ['M8', 'TGA', 'Coastal Watch'],
-    // Westgate POIs
-    ['A2', 'Westgate', 'Harbor Gate'],
-    ['D1', 'Westgate', 'Trade District'],
-    ['F1', 'Westgate', 'Royal Palace'],
-    ['F3', 'Westgate', 'Grand Plaza'],
-    ['F4', 'Westgate', 'Merchants Guild'],
-    ['C6', 'Westgate', 'Artisan Quarter'],
-    ['H3', 'Westgate', 'Garrison'],
-    ['H6', 'Westgate', 'Temple District'],
-    ['L2', 'Westgate', 'Eastern Gate'],
-    ['L4', 'Westgate', 'Warehouse Row'],
-    ['L8', 'Westgate', 'Shipyard'],
-    ['M8', 'Westgate', 'Lighthouse']
-  ];
+  // POI locations (same for both maps)
+  var poiLocations = ['A2', 'B8', 'C4', 'C6', 'D1', 'E6', 'F1', 'F3', 'F5', 'F9', 'G4', 'H6', 'I3', 'J6', 'K8', 'L3', 'M2', 'M4', 'N8'];
+
+  var data = [['Territory', 'Map', 'Name']];
+
+  // Add POIs for TGA
+  for (var i = 0; i < poiLocations.length; i++) {
+    data.push([poiLocations[i], 'TGA', 'POI ' + poiLocations[i]]);
+  }
+
+  // Add POIs for Westgate
+  for (var i = 0; i < poiLocations.length; i++) {
+    data.push([poiLocations[i], 'Westgate', 'POI ' + poiLocations[i]]);
+  }
 
   DataService.writeData(sheet, data);
 
