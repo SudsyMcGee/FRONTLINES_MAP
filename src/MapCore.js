@@ -111,8 +111,11 @@ var MapCore = (function() {
    * @param {Sheet} sheet - Map sheet to render to
    * @param {Array[]} renderData - Grid of cell render objects
    * @param {string} mapTitle - Title to display above map
+   * @param {Object} playerColors - Player name to color mapping
+   * @param {string} mapLocation - Map identifier for filtering players
+   * @param {Object} playerMaps - Player name to map assignment
    */
-  function renderMap(sheet, renderData, mapTitle) {
+  function renderMap(sheet, renderData, mapTitle, playerColors, mapLocation, playerMaps) {
     // Define grid area (starts at row 3, col 2 to leave room for title and labels)
     var gridStartRow = 3;
     var gridStartCol = 2;
@@ -253,6 +256,95 @@ var MapCore = (function() {
     for (var r = gridStartRow; r < gridStartRow + numRows; r++) {
       sheet.setRowHeight(r, CONFIG.map.cellHeight);
     }
+
+    // Render legend on the right side
+    if (playerColors && playerMaps) {
+      renderLegend(sheet, playerColors, playerMaps, mapLocation, gridStartRow, numCols);
+    }
+  }
+
+  /**
+   * Render a legend with player colors on the right side of the map
+   * @param {Sheet} sheet - Map sheet
+   * @param {Object} playerColors - Player name to color mapping
+   * @param {Object} playerMaps - Player name to map assignment
+   * @param {string} mapLocation - Current map (TGA or Westgate)
+   * @param {number} gridStartRow - Starting row of the grid
+   * @param {number} numCols - Number of columns in the grid
+   */
+  function renderLegend(sheet, playerColors, playerMaps, mapLocation, gridStartRow, numCols) {
+    // Legend starts 2 columns after the map grid
+    var legendStartCol = numCols + 4; // col 2 (grid start) + 14 (grid) + 2 (gap) = 18
+    var legendRow = 2;
+
+    // Get players for this map
+    var playersForMap = [];
+    for (var name in playerMaps) {
+      if (playerMaps.hasOwnProperty(name)) {
+        var maps = playerMaps[name];
+        // Include player if they're on this map or both maps
+        if (maps === mapLocation || maps === CONFIG.locations.BOTH) {
+          playersForMap.push({
+            name: name,
+            color: playerColors[name] || CONFIG.display.neutralColor
+          });
+        }
+      }
+    }
+
+    // Sort players alphabetically
+    playersForMap.sort(function(a, b) {
+      return a.name.localeCompare(b.name);
+    });
+
+    // Clear old legend area (allow for up to 30 players)
+    var clearRange = sheet.getRange(legendRow, legendStartCol, 32, 2);
+    clearRange.clear();
+
+    // Legend title
+    sheet.getRange(legendRow, legendStartCol, 1, 2).merge();
+    sheet.getRange(legendRow, legendStartCol)
+      .setValue('🎮 PLAYERS')
+      .setFontSize(12)
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center')
+      .setBackground('#2C3E50')
+      .setFontColor('#FFFFFF');
+
+    // Set column widths for legend
+    sheet.setColumnWidth(legendStartCol, 30);      // Color swatch column
+    sheet.setColumnWidth(legendStartCol + 1, 120); // Name column
+
+    // Render each player
+    for (var i = 0; i < playersForMap.length; i++) {
+      var player = playersForMap[i];
+      var rowNum = legendRow + 1 + i;
+
+      // Color swatch (column 1)
+      var swatchCell = sheet.getRange(rowNum, legendStartCol);
+      swatchCell.setBackground(player.color);
+      swatchCell.setBorder(
+        true, true, true, true, false, false,
+        darkenColor(player.color),
+        SpreadsheetApp.BorderStyle.SOLID
+      );
+
+      // Player name (column 2)
+      var nameCell = sheet.getRange(rowNum, legendStartCol + 1);
+      nameCell.setValue(player.name);
+      nameCell.setFontSize(10);
+      nameCell.setHorizontalAlignment('left');
+      nameCell.setVerticalAlignment('middle');
+      nameCell.setBackground('#F8F9FA');
+      nameCell.setBorder(
+        true, true, true, true, false, false,
+        '#CCCCCC',
+        SpreadsheetApp.BorderStyle.SOLID
+      );
+
+      // Set row height for legend rows
+      sheet.setRowHeight(rowNum, 22);
+    }
   }
 
   /**
@@ -263,6 +355,7 @@ var MapCore = (function() {
   function updateMap(ss, mapLocation) {
     // Load all required data (batch reads)
     var playerColors = DataService.loadPlayerColors(ss);
+    var playerMaps = DataService.loadPlayerMaps(ss);
     var pois = DataService.loadPOIs(ss, mapLocation);
     var startingOwners = DataService.loadStartingTerritories(ss, mapLocation);
     var resultsData = DataService.loadGameResults(ss);
@@ -282,7 +375,7 @@ var MapCore = (function() {
     var mapSheet = DataService.getMapSheet(ss, mapLocation);
     if (mapSheet) {
       var title = mapLocation === CONFIG.locations.TGA ? 'TGA Map' : 'Westgate Map';
-      renderMap(mapSheet, renderData, title);
+      renderMap(mapSheet, renderData, title, playerColors, mapLocation, playerMaps);
     }
   }
 
