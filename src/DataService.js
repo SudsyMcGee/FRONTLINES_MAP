@@ -115,7 +115,8 @@ var DataService = (function() {
   function loadPOIs(ss, mapLocation) {
     var sheet = getSheet(ss, CONFIG.sheets.POI_DEFINITIONS);
     var data = readAllData(sheet);
-    return createLookup(data, 0, 2, 1, mapLocation); // territory -> name, filtered by map
+    // Use territory lookup to normalize keys (uppercase, trimmed)
+    return createTerritoryLookup(data, 0, 2, 1, mapLocation); // territory -> name, filtered by map
   }
 
   /**
@@ -127,7 +128,8 @@ var DataService = (function() {
   function loadStartingTerritories(ss, mapLocation) {
     var sheet = getSheet(ss, CONFIG.sheets.STARTING_TERRITORIES);
     var data = readAllData(sheet);
-    return createLookup(data, 0, 1, 2, mapLocation); // territory -> owner, filtered by map
+    // Use territory lookup to normalize keys (uppercase, trimmed)
+    return createTerritoryLookup(data, 0, 1, 2, mapLocation); // territory -> owner, filtered by map
   }
 
   /**

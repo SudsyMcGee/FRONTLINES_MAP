@@ -132,9 +132,10 @@ function stringsMatch(a, b) {
  * @param {number} valueCol - Column index for values
  * @param {number} [filterCol] - Optional column to filter by
  * @param {string} [filterValue] - Value to filter on
+ * @param {boolean} [normalizeKeys=false] - Whether to normalize keys (uppercase, trimmed)
  * @returns {Object} Lookup map
  */
-function createLookup(data, keyCol, valueCol, filterCol, filterValue) {
+function createLookup(data, keyCol, valueCol, filterCol, filterValue, normalizeKeys) {
   var lookup = {};
 
   for (var i = 1; i < data.length; i++) {
@@ -149,9 +150,26 @@ function createLookup(data, keyCol, valueCol, filterCol, filterValue) {
 
     var key = row[keyCol];
     if (key !== undefined && key !== null && key !== '') {
+      // Normalize key if requested (for territory lookups)
+      if (normalizeKeys) {
+        key = String(key).trim().toUpperCase();
+      }
       lookup[key] = row[valueCol];
     }
   }
 
   return lookup;
+}
+
+/**
+ * Create a territory lookup map (keys normalized to uppercase)
+ * @param {Array[]} data - 2D array with headers in first row
+ * @param {number} keyCol - Column index for territory keys
+ * @param {number} valueCol - Column index for values
+ * @param {number} [filterCol] - Optional column to filter by
+ * @param {string} [filterValue] - Value to filter on
+ * @returns {Object} Lookup map with normalized territory keys
+ */
+function createTerritoryLookup(data, keyCol, valueCol, filterCol, filterValue) {
+  return createLookup(data, keyCol, valueCol, filterCol, filterValue, true);
 }
