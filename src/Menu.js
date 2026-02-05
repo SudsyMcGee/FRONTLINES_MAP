@@ -14,9 +14,47 @@ function onOpen() {
     .addItem('Show Player Roster', 'menuShowRoster')
     .addSeparator()
     .addItem('Refresh Dropdowns', 'menuRefreshDropdowns')
+    .addItem('Format Player Colors', 'menuFormatPlayerColors')
     .addSeparator()
     .addItem('Help', 'menuShowHelp')
     .addToUi();
+}
+
+/**
+ * Trigger that runs when a cell is edited
+ * Auto-formats color cells in Player Roster
+ */
+function onEdit(e) {
+  if (!e || !e.range) return;
+
+  var sheet = e.range.getSheet();
+  var sheetName = sheet.getName();
+
+  // Only process Player Roster sheet, column B (color column)
+  if (sheetName !== CONFIG.sheets.PLAYER_ROSTER) return;
+  if (e.range.getColumn() !== 2) return;
+  if (e.range.getRow() === 1) return; // Skip header
+
+  var value = e.range.getValue();
+  if (value && typeof value === 'string' && value.match(/^#[0-9A-Fa-f]{6}$/)) {
+    // Valid hex color - set background and contrasting text
+    e.range.setBackground(value);
+    e.range.setFontColor(getContrastingTextColor(value));
+  }
+}
+
+/**
+ * Get black or white text color based on background brightness
+ */
+function getContrastingTextColor(hexColor) {
+  var r = parseInt(hexColor.slice(1, 3), 16);
+  var g = parseInt(hexColor.slice(3, 5), 16);
+  var b = parseInt(hexColor.slice(5, 7), 16);
+
+  // Calculate perceived brightness
+  var brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+  return brightness > 128 ? '#000000' : '#FFFFFF';
 }
 
 /**
@@ -118,6 +156,41 @@ function menuRefreshDropdowns() {
   } catch (error) {
     ui.alert('❌ Error', 'Failed to refresh dropdowns: ' + error.message, ui.ButtonSet.OK);
     console.error('Dropdown error:', error);
+  }
+}
+
+/**
+ * Menu action: Format all player color cells
+ */
+function menuFormatPlayerColors() {
+  var ui = SpreadsheetApp.getUi();
+  var ss = SpreadsheetApp.getActive();
+
+  try {
+    var rosterSheet = DataService.getSheet(ss, CONFIG.sheets.PLAYER_ROSTER);
+    if (!rosterSheet) {
+      ui.alert('❌ Error', 'Player Roster sheet not found.', ui.ButtonSet.OK);
+      return;
+    }
+
+    var data = rosterSheet.getDataRange().getValues();
+    var colorColumn = 2; // Column B
+
+    var formatted = 0;
+    for (var i = 1; i < data.length; i++) {
+      var colorValue = data[i][1]; // Column B (0-indexed = 1)
+      if (colorValue && typeof colorValue === 'string' && colorValue.match(/^#[0-9A-Fa-f]{6}$/)) {
+        var cell = rosterSheet.getRange(i + 1, colorColumn);
+        cell.setBackground(colorValue);
+        cell.setFontColor(getContrastingTextColor(colorValue));
+        formatted++;
+      }
+    }
+
+    ui.alert('✅ Colors Formatted', 'Applied background colors to ' + formatted + ' player(s).', ui.ButtonSet.OK);
+  } catch (error) {
+    ui.alert('❌ Error', 'Failed to format colors: ' + error.message, ui.ButtonSet.OK);
+    console.error('Format colors error:', error);
   }
 }
 
