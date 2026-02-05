@@ -341,9 +341,6 @@ var MapCore = (function() {
         '#CCCCCC',
         SpreadsheetApp.BorderStyle.SOLID
       );
-
-      // Set row height for legend rows
-      sheet.setRowHeight(rowNum, 22);
     }
   }
 
