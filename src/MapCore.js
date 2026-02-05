@@ -114,8 +114,10 @@ var MapCore = (function() {
    * @param {Object} playerColors - Player name to color mapping
    * @param {string} mapLocation - Map identifier for filtering players
    * @param {Object} playerMaps - Player name to map assignment
+   * @param {Object} owners - Territory to owner mapping
+   * @param {Object} pois - Territory to POI name mapping
    */
-  function renderMap(sheet, renderData, mapTitle, playerColors, mapLocation, playerMaps) {
+  function renderMap(sheet, renderData, mapTitle, playerColors, mapLocation, playerMaps, owners, pois) {
     // Define grid area (starts at row 3, col 2 to leave room for title and labels)
     var gridStartRow = 3;
     var gridStartCol = 2;
@@ -259,7 +261,7 @@ var MapCore = (function() {
 
     // Render legend on the right side
     if (playerColors && playerMaps) {
-      renderLegend(sheet, playerColors, playerMaps, mapLocation, gridStartRow, numCols);
+      renderLegend(sheet, playerColors, playerMaps, mapLocation, gridStartRow, numCols, owners, pois);
     }
   }
 
@@ -271,11 +273,31 @@ var MapCore = (function() {
    * @param {string} mapLocation - Current map (TGA or Westgate)
    * @param {number} gridStartRow - Starting row of the grid
    * @param {number} numCols - Number of columns in the grid
+   * @param {Object} owners - Territory to owner mapping
+   * @param {Object} pois - Territory to POI name mapping
    */
-  function renderLegend(sheet, playerColors, playerMaps, mapLocation, gridStartRow, numCols) {
+  function renderLegend(sheet, playerColors, playerMaps, mapLocation, gridStartRow, numCols, owners, pois) {
     // Legend starts 2 columns after the map grid
     var legendStartCol = numCols + 4; // col 2 (grid start) + 14 (grid) + 2 (gap) = 18
     var legendRow = 2;
+
+    // Count territories and POIs per player
+    var territoryCounts = {};
+    var poiCounts = {};
+
+    for (var territory in owners) {
+      if (owners.hasOwnProperty(territory)) {
+        var owner = owners[territory];
+        if (owner) {
+          territoryCounts[owner] = (territoryCounts[owner] || 0) + 1;
+
+          // Check if this territory is a POI
+          if (pois && pois[territory]) {
+            poiCounts[owner] = (poiCounts[owner] || 0) + 1;
+          }
+        }
+      }
+    }
 
     // Get players for this map
     var playersForMap = [];
@@ -286,34 +308,45 @@ var MapCore = (function() {
         if (maps === mapLocation || maps === CONFIG.locations.BOTH) {
           playersForMap.push({
             name: name,
-            color: playerColors[name] || CONFIG.display.neutralColor
+            color: playerColors[name] || CONFIG.display.neutralColor,
+            territories: territoryCounts[name] || 0,
+            pois: poiCounts[name] || 0
           });
         }
       }
     }
 
-    // Sort players alphabetically
+    // Sort players by territory count (descending), then alphabetically
     playersForMap.sort(function(a, b) {
+      if (b.territories !== a.territories) {
+        return b.territories - a.territories;
+      }
       return a.name.localeCompare(b.name);
     });
 
-    // Clear old legend area (allow for up to 30 players)
-    var clearRange = sheet.getRange(legendRow, legendStartCol, 32, 2);
+    // Clear old legend area (allow for up to 30 players, 4 columns)
+    var clearRange = sheet.getRange(legendRow, legendStartCol, 32, 4);
     clearRange.clear();
 
-    // Legend title
-    sheet.getRange(legendRow, legendStartCol, 1, 2).merge();
-    sheet.getRange(legendRow, legendStartCol)
-      .setValue('PLAYERS')
-      .setFontSize(12)
-      .setFontWeight('bold')
-      .setHorizontalAlignment('center')
-      .setBackground('#2C3E50')
-      .setFontColor('#FFFFFF');
+    // Legend header row
+    var headerCells = [
+      { col: legendStartCol, value: '', width: 30 },
+      { col: legendStartCol + 1, value: 'Player', width: 110 },
+      { col: legendStartCol + 2, value: 'Terr', width: 40 },
+      { col: legendStartCol + 3, value: 'POI', width: 40 }
+    ];
 
-    // Set column widths for legend
-    sheet.setColumnWidth(legendStartCol, 30);      // Color swatch column
-    sheet.setColumnWidth(legendStartCol + 1, 120); // Name column
+    for (var h = 0; h < headerCells.length; h++) {
+      var header = headerCells[h];
+      var headerCell = sheet.getRange(legendRow, header.col);
+      headerCell.setValue(header.value);
+      headerCell.setFontSize(10);
+      headerCell.setFontWeight('bold');
+      headerCell.setHorizontalAlignment('center');
+      headerCell.setBackground('#2C3E50');
+      headerCell.setFontColor('#FFFFFF');
+      sheet.setColumnWidth(header.col, header.width);
+    }
 
     // Render each player
     for (var i = 0; i < playersForMap.length; i++) {
@@ -337,6 +370,32 @@ var MapCore = (function() {
       nameCell.setVerticalAlignment('middle');
       nameCell.setBackground('#F8F9FA');
       nameCell.setBorder(
+        true, true, true, true, false, false,
+        '#CCCCCC',
+        SpreadsheetApp.BorderStyle.SOLID
+      );
+
+      // Territory count (column 3)
+      var terrCell = sheet.getRange(rowNum, legendStartCol + 2);
+      terrCell.setValue(player.territories);
+      terrCell.setFontSize(10);
+      terrCell.setHorizontalAlignment('center');
+      terrCell.setVerticalAlignment('middle');
+      terrCell.setBackground('#F8F9FA');
+      terrCell.setBorder(
+        true, true, true, true, false, false,
+        '#CCCCCC',
+        SpreadsheetApp.BorderStyle.SOLID
+      );
+
+      // POI count (column 4)
+      var poiCell = sheet.getRange(rowNum, legendStartCol + 3);
+      poiCell.setValue(player.pois);
+      poiCell.setFontSize(10);
+      poiCell.setHorizontalAlignment('center');
+      poiCell.setVerticalAlignment('middle');
+      poiCell.setBackground('#F8F9FA');
+      poiCell.setBorder(
         true, true, true, true, false, false,
         '#CCCCCC',
         SpreadsheetApp.BorderStyle.SOLID
@@ -378,7 +437,7 @@ var MapCore = (function() {
     var mapSheet = DataService.getMapSheet(ss, mapLocation);
     if (mapSheet) {
       var title = mapLocation === CONFIG.locations.TGA ? 'TGA Map' : 'Westgate Map';
-      renderMap(mapSheet, renderData, title, playerColors, mapLocation, playerMaps);
+      renderMap(mapSheet, renderData, title, playerColors, mapLocation, playerMaps, processed.owners, pois);
     }
   }
 
